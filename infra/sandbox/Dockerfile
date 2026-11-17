@@ -1,5 +1,7 @@
 FROM oven/bun:1.2.22-alpine
 RUN addgroup -S runner && adduser -S runner -G runner
-WORKDIR /workspace
+WORKDIR /app
+COPY health.ts ./health.ts
 USER runner
-CMD ["bun", "--version"]
+EXPOSE 8080
+CMD ["bun", "run", "health.ts"]
