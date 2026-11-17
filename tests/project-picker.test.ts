@@ -51,7 +51,7 @@ describe("project picker", () => {
       entries: [{ name: "private-repo", isDirectory: true }],
       denyRead: "/workspace/private-repo",
     }));
-    expect(result).toEqual({ kind: "permission_denied", path: "/workspace" });
+    expect(result).toEqual({ kind: "permission_denied", path: "/workspace/private-repo" });
   });
 
   it("recognizes the selected directory itself as a repository", async () => {
