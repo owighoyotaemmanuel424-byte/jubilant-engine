@@ -17,3 +17,20 @@ Select provider adapters through server-side tier configuration. Never embed pro
 
 ## 0006 — Advertising privacy
 Never send raw prompts, source code, credentials, or private repository contents to advertising partners.
+
+## 0007 — Live provider model catalogue (reviewed 2026-11-17)
+The provider catalogue is sourced from official provider documentation checked on 2026-11-17. Prices are USD per million tokens, standard/base token rates, before prompt-cache discounts or surcharges, regional premiums, batch/flex discounts, and taxes. Provider pricing and availability can change; refresh before release and do not treat these values as billing guarantees.
+
+- OpenAI model IDs, context windows, output limits, and model selection: https://developers.openai.com/api/docs/models
+- OpenAI API pricing: https://platform.openai.com/pricing
+- Anthropic model IDs, context windows, and max output: https://platform.claude.com/docs/en/models/overview
+- Anthropic API pricing: https://platform.claude.com/docs/en/about-claude/pricing
+- DeepSeek current model IDs and capabilities: https://api-docs.deepseek.com/api/list-models/
+- DeepSeek model context, output limits, peak/off-peak and cached-token pricing: https://api-docs.deepseek.com/quick_start/pricing/
+
+Catalogue snapshot (2026-11-17):
+- OpenAI: `gpt-6-astra`, `gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-luna`; 1.05M context and 128K max output. Base input/output USD per MTok: Astra 10/50, Sol 2/10, Terra 1/5, Luna 0.10/0.50.
+- Anthropic: `claude-fable-5-2`, `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`; 1M context and 128K max output. Base input/output USD per MTok: Fable 8/40, Opus 4/20, Sonnet 2/10, Haiku from 0.10/0.50 (higher input tier above 100K prompt tokens).
+- DeepSeek: `deepseek-flash` and `deepseek-v4-pro`; 1M context and maximum 384K output. Peak cache-miss input/output USD per MTok: Flash 0.30/1.20, V4 Pro 1.32/3.96. Off-peak rates are half; cache-hit rates are separately priced.
+
+All production model choice must pass through `resolveModelForTier`. The model catalogue is the only source of provider model identifiers and published price/context metadata.

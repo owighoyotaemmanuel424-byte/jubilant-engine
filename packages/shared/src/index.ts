@@ -12,3 +12,4 @@ export interface QuotaUsage { readonly userId: Identifier; readonly localDate: s
 export interface Ad { readonly id: Identifier; readonly sponsorName: string; readonly label: "Sponsored"; readonly headline: string; readonly destinationUrl: string; readonly contextualCategory: string; }
 export interface ProviderConfig { readonly provider: "deepseek" | "openai" | "anthropic"; readonly model: string; readonly tier: "free" | "paid" | "internal"; }
 export interface AgentEvent { readonly sessionId: Identifier; readonly sequence: number; readonly type: "text_delta" | "tool_call" | "tool_result" | "status" | "error"; readonly timestamp: ISODateTime; readonly payload: Readonly<Record<string, string | number | boolean | null>>; }
+export * from "./redaction";

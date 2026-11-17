@@ -1,40 +1,34 @@
 # Engineering Progress
 
-## Current phase: Phase 0 — Foundation (pre-flight refresh)
+## Phase 0 — Foundation
+CI PASSED on branch `phase-0/foundation`, commit `25ac1d369c6c56395b787e7fc27a6ed081d3c956`.
+- [x] Bun install, lint, typecheck, tests, and build passed in GitHub Actions.
+- [x] Docker sandbox image built and /health probe passed in GitHub Actions.
+- [x] Four app stubs and ten package stubs have READMEs.
+- [x] Workspace inventory documented.
 
-### Workspace inventory
-Applications:
-- [x] `apps/cli` — stub and README
-- [x] `apps/desktop` — stub and README
-- [x] `apps/web` — stub and README
-- [x] `apps/cloud` — stub and README
+Draft review: https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/pull/1
+Successful Phase 0 run: https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44035465991
 
-Packages (10):
-- [x] `packages/agent-runtime` — stub and README
-- [x] `packages/llm-providers` — stub and README
-- [x] `packages/code-map` — stub and README
-- [x] `packages/sandbox-orchestrator` — stub and README
-- [x] `packages/db` — stub and README
-- [x] `packages/auth` — stub and README
-- [x] `packages/quota` — stub and README
-- [x] `packages/ads` — stub and README
-- [x] `packages/sdk` — stub and README
-- [x] `packages/shared` — contracts and README
+## Phase 1 — Agent Runtime
+Implemented on `phase-1/agent-runtime`.
 
-### Phase 0 gate checklist
-- [ ] Bun workspace installation completed
-- [ ] bun run lint passes
-- [ ] bun run typecheck passes
-- [ ] bun run test passes
-- [ ] bun run build passes
-- [ ] bun run check passes
-- [ ] CI quality job passes on `phase-0/foundation`
-- [ ] CI sandbox image build and /health probe pass
+### Expanded Phase 1 gate — VERIFIED
+- [x] 5/5 scripted fixture tasks produce expected file diffs.
+- [x] Recorded-HTTP tests pass for DeepSeek, OpenAI, and Anthropic; each provider exercises success, HTTP 429, HTTP 503, timeout, and caller-abort paths.
+- [x] Deterministic adversarial tool parsing passes malformed JSON, truncated JSON, unsafe keys, fragmented arguments, and interleaved text/tool events.
+- [x] Mid-stream cancellation passes: SSE reader cancellation, in-flight provider request abort, and real OS subprocess termination/drain.
+- [x] Parallel subagent edits pass: disjoint file locks execute concurrently; overlapping edits are rejected.
+- [x] Static model-selection test proves model IDs occur only in the catalogue/resolver and tier selection is performed through `resolveModelForTier`.
+- [x] Full `bun run check` passes: ESLint, TypeScript, Vitest, and all workspace builds.
 
-### Known gaps
-- Bun is not installed in the current execution environment; local gate has not been run here.
-- Generate and commit the initial Bun lockfile with `bun install`.
-- OAuth, database migrations, and production sandbox isolation are later-phase work.
+CI evidence (latest commit `d4d9273de8bbdaaa79013b46f39b2591d2f855a8`):
+https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44036774346
 
-### Phase 1 status
-Not started. Awaiting Phase 0 branch CI green and pre-flight review.
+Test evidence: 12 test files passed, 47 tests passed. No provider credentials or live model calls were used; provider behavior is covered with recorded HTTP/SSE fixtures.
+
+### Remaining constraints
+- Production sandbox isolation, deployment infrastructure, and live-provider credential configuration are intentionally deferred to later phases.
+- No paid infrastructure or model API calls were provisioned.
+
+Phase 2 has not started. Awaiting approval before proceeding.
