@@ -2,6 +2,7 @@ import { constants } from "node:fs";
 import { access, readdir, realpath, stat } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { join } from "node:path";
 
 const execFileAsync = promisify(execFile);
 
@@ -100,7 +101,8 @@ export async function discoverProjects(
     const childDirectories = entries.filter((entry) => entry.isDirectory).sort((a, b) => a.name.localeCompare(b.name));
     const projects: DiscoveredProject[] = [];
     for (const entry of childDirectories) {
-      const childPath = `${directory.replace(/[\\/]$/, "")}/${entry.name}`;
+      const childPath = join(directory, entry.name);
+      await adapters.fileSystem.assertReadable(childPath);
       const repositoryRoot = await adapters.git.findRepositoryRoot(childPath);
       if (repositoryRoot !== null) projects.push({ name: entry.name, path: repositoryRoot });
     }
