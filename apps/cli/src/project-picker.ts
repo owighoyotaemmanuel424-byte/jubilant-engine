@@ -102,7 +102,12 @@ export async function discoverProjects(
     const projects: DiscoveredProject[] = [];
     for (const entry of childDirectories) {
       const childPath = join(directory, entry.name);
-      await adapters.fileSystem.assertReadable(childPath);
+      try {
+        await adapters.fileSystem.assertReadable(childPath);
+      } catch (error) {
+        if (isPermissionError(error)) return { kind: "permission_denied", path: childPath };
+        throw error;
+      }
       const repositoryRoot = await adapters.git.findRepositoryRoot(childPath);
       if (repositoryRoot !== null) projects.push({ name: entry.name, path: repositoryRoot });
     }
