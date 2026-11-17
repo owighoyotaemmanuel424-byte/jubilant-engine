@@ -95,4 +95,4 @@ These are the committed Phase 1 suite's 47 runtime test cases (parameterized cas
 - [x] Coverage map published.
 - [x] Tool inventory published with implementation status, distinguishing generic infrastructure from actual tools.
 - [x] Code-map explicitly deferred into Phase 2 gate by dated decision.
-- [ ] Phase 2 remains blocked until the remaining Phase 1 approval/branch-management steps are completed and the expanded Phase 2 gate is implemented and verified.
+- [x] Phase 1 documentation closeout complete; Phase 2 is authorized to begin. The expanded Phase 2 gate remains a release/acceptance gate, not a claim that its features are already implemented. Execute the approved branch-management sequence during Phase 2.
