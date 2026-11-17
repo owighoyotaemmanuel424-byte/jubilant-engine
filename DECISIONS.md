@@ -35,7 +35,6 @@ Catalogue snapshot (2026-11-17):
 
 All production model choice must pass through `resolveModelForTier`. The model catalogue is the only source of provider model identifiers and published price/context metadata.
 
-
 ## 0008 — Phase 0 test-count correction and Phase 1 baseline (2026-11-18)
 
 Phase 0 report claimed '66 tests in 11 files.' The committed tree at 25ac1d3 contains one test file. Phase 0 → Phase 1 added 11 files and deleted none, so Phase 0 had 1 test file. The 66 figure was measured against an uncommitted working tree and cannot be reproduced. Phase 1 baseline = 47 tests across 12 files. No spec-required coverage was lost; the 47-test suite covers every required area.
@@ -45,3 +44,7 @@ The Phase 1 baseline is accepted at 47/47 across 12 files. Do not add filler tes
 ## 0009 — Code-map implementation deferred to Phase 2 gate (2026-11-18)
 
 The Phase 1 `packages/code-map/src/index.ts` is a foundation stub, not a working code-map implementation; no Phase 1 code-map tests exist. Defer code-map implementation and its targeted tests into the Phase 2 gate. Phase 2 must deliver repository indexing/code-map behavior and tests before the gate can pass.
+
+## 0010 — Mainline and phase-branch policy (2026-11-18)
+
+`main` is the sole integration branch and the source of truth for accepted work. Each phase is developed on its own named phase branch and submitted as a pull request targeting `main`; phase PRs must not depend on another unmerged phase branch as their base. Merge completed prerequisite phase PRs into `main` before retargeting dependent phase PRs. After retargeting, rebase/update the phase branch as required, resolve conflicts without discarding accepted work, and rerun the full applicable CI gate before merging. Do not start the next phase's implementation branch from a stale pre-merge base. Keep phase PRs draft until their review gate is ready, then mark ready and merge only after required checks pass. No direct commits to `main` for feature implementation; documentation corrections for an active phase belong on that phase branch and flow through its PR.
