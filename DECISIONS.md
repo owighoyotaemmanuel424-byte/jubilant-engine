@@ -34,3 +34,14 @@ Catalogue snapshot (2026-11-17):
 - DeepSeek: `deepseek-flash` and `deepseek-v4-pro`; 1M context and maximum 384K output. Peak cache-miss input/output USD per MTok: Flash 0.30/1.20, V4 Pro 1.32/3.96. Off-peak rates are half; cache-hit rates are separately priced.
 
 All production model choice must pass through `resolveModelForTier`. The model catalogue is the only source of provider model identifiers and published price/context metadata.
+
+
+## 0008 — Phase 0 test-count correction and Phase 1 baseline (2026-11-18)
+
+Phase 0 report claimed '66 tests in 11 files.' The committed tree at 25ac1d3 contains one test file. Phase 0 → Phase 1 added 11 files and deleted none, so Phase 0 had 1 test file. The 66 figure was measured against an uncommitted working tree and cannot be reproduced. Phase 1 baseline = 47 tests across 12 files. No spec-required coverage was lost; the 47-test suite covers every required area.
+
+The Phase 1 baseline is accepted at 47/47 across 12 files. Do not add filler tests to reach the historical, unreproducible 66 figure. Add tests only for identified requirement gaps, with an explicit reason.
+
+## 0009 — Code-map implementation deferred to Phase 2 gate (2026-11-18)
+
+The Phase 1 `packages/code-map/src/index.ts` is a foundation stub, not a working code-map implementation; no Phase 1 code-map tests exist. Defer code-map implementation and its targeted tests into the Phase 2 gate. Phase 2 must deliver repository indexing/code-map behavior and tests before the gate can pass.
