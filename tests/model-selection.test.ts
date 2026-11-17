@@ -10,7 +10,7 @@ async function sourceFiles(directory: string): Promise<string[]> {
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await sourceFiles(path));
-    else if (entry.isFile() && entry.name.endsWith(".ts")) files.push(path);
+    else if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) files.push(path);
   }
   return files;
 }
@@ -26,7 +26,7 @@ describe("tier model selection policy", () => {
   });
   it("keeps literal model IDs out of application and runtime code", async () => {
     const modelIds = MODEL_CATALOGUE.map((model) => model.id);
-    for (const path of await sourceFiles(join(process.cwd(), "packages"))) {
+    for (const root of ["packages", "apps"]) for (const path of await sourceFiles(join(process.cwd(), root))) {
       if (path.endsWith("model-catalog.ts") || path.endsWith("resolve-model.ts")) continue;
       const source = await readFile(path, "utf8");
       for (const modelId of modelIds) expect(source, `hardcoded model ID in ${path}`).not.toContain(modelId);
