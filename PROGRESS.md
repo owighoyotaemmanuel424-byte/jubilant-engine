@@ -42,8 +42,8 @@ Implemented on `phase-1/agent-runtime`.
 - [x] Static model-selection test proves model IDs occur only in the catalogue/resolver and tier selection is performed through `resolveModelForTier`.
 - [x] Full `bun run check` passes: ESLint, TypeScript, Vitest, and all workspace builds. The same CI run also builds the sandbox image and probes `/health` successfully.
 
-CI evidence (latest commit `cb6d32598eecc310f1ae4b647d773747aa4c1378`):
-https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44037058644
+CI evidence (latest commit `36a025553bbd264945bb96b1daa00eff864f4628`):
+https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44037397441
 
 Test evidence: 12 test files passed, 47 tests passed. No provider credentials or live model calls were used; provider behavior is covered with recorded HTTP/SSE fixtures.
 
