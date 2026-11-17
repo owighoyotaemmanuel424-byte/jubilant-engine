@@ -52,3 +52,47 @@ Test evidence: 12 test files passed, 47 tests passed. No provider credentials or
 - No paid infrastructure or model API calls were provisioned.
 
 Phase 2 has not started. Awaiting approval before proceeding.
+
+
+## Phase 1 baseline correction and coverage map (2026-11-18)
+
+The earlier Phase 0 report's "66 tests in 11 files" figure was inaccurate: it was measured against an uncommitted working tree and cannot be reproduced from the committed Phase 0 tree. The committed Phase 0 tree at `25ac1d3` has one test file. Phase 0 → Phase 1 added 11 test files and deleted none. Accept Phase 1's **47/47 tests across 12 files** as the baseline. No filler tests will be added to chase 66.
+
+### Coverage mapping — 47 runtime tests to Phase 1 gate requirements
+
+| Test file | Runtime cases | Gate requirement covered |
+|---|---:|---|
+| `ad-creative.types.test.ts` | 1 | Sponsored-ad disclosure contract: label is exactly `Sponsored` |
+| `fixture-agent-tasks.test.ts` | 5 | Scripted agent tool execution and expected file diffs across README, source, route, test fixture, and environment-example tasks |
+| `local-midnight.test.ts` | 2 | Timezone-aware quota calendar reset, including 23-hour and 25-hour DST days |
+| `model-selection.test.ts` | 2 | Provider/tier resolver coverage and static guard against hardcoded model IDs outside catalogue/resolver |
+| `provider-http.test.ts` | 15 | DeepSeek/OpenAI/Anthropic recorded HTTP success, retryable 429/503, timeout, and caller cancellation (5 cases per provider) |
+| `provider-streaming.test.ts` | 4 | OpenAI-compatible fragmented/interleaved streaming for DeepSeek and OpenAI; Anthropic event normalization; active SSE cancellation and reader cleanup |
+| `redaction-adversarial.test.ts` | 3 | Bearer/API/GitHub/private-key redaction, multiline PEM redaction, mixed-case/nested-looking secret redaction |
+| `retry-circuit-breaker.test.ts` | 4 | Retry jitter bounds and exponential cap; circuit-breaker closed/open/half-open transitions and failed probe |
+| `shared-contracts.test.ts` | 4 | Agent, sponsored-ad, country-aware quota, and persistent-session shared contracts |
+| `subagent-cancellation.test.ts` | 3 | Concurrent disjoint file locks, rejection of overlapping edits, managed subprocess cancellation/cleanup |
+| `subprocess-cancellation.integration.test.ts` | 1 | Real OS subprocess termination and drain on cancellation |
+| `tool-parser.test.ts` | 3 | Malformed/truncated JSON rejection, non-object/unsafe-key/invalid-name rejection, deterministic fragmented/interleaved tool parsing |
+| **Total** | **47** | **Phase 1 expanded gate coverage** |
+
+These are the committed Phase 1 suite's 47 runtime test cases (parameterized cases expanded). The coverage map describes what the tests exercise; it does not claim Phase 2 production features are already implemented.
+
+### Phase 1 tool inventory — one line per specified tool
+
+- **read:** Not implemented as a production runtime tool; Phase 1 exposes only the generic injected `RuntimeTool` execution interface.
+- **write:** Not implemented as a production runtime tool; the fixture test injects a test-only `write_file` tool to verify agent-loop dispatch.
+- **edit:** Not implemented as a production runtime tool; no patch/diff application tool exists in Phase 1.
+- **multi-file coordinated edit:** Partial foundation only — `FileEditCoordinator` provides sorted per-file locking and conflict rejection; it does not itself read, patch, or write files atomically.
+- **ripgrep:** Not implemented; no repository search tool or ripgrep subprocess wrapper exists in Phase 1.
+- **terminal exec (sandboxed):** Not implemented; `ManagedProcessRegistry` manages cancellation/cleanup for an abstract process, but Phase 1 has no sandboxed command-execution broker.
+- **web fetch:** Not implemented; no outbound web-fetch tool or policy wrapper exists in Phase 1.
+- **code-map:** Foundation stub only at `packages/code-map/src/index.ts`; no indexing/query implementation or tests. Deferred by DECISIONS.md entry 0009 into the Phase 2 gate.
+
+### Phase 1 closeout status
+
+- [x] Phase 0 test-count discrepancy classified as a reporting error; 47/47 across 12 files accepted as Phase 1 baseline.
+- [x] Coverage map published.
+- [x] Tool inventory published with implementation status, distinguishing generic infrastructure from actual tools.
+- [x] Code-map explicitly deferred into Phase 2 gate by dated decision.
+- [ ] Phase 2 remains blocked until the remaining Phase 1 approval/branch-management steps are completed and the expanded Phase 2 gate is implemented and verified.
