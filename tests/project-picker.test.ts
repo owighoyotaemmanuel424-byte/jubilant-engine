@@ -5,11 +5,11 @@ function adapters(input: {
   entries?: readonly { name: string; isDirectory: boolean }[];
   selectedIsRepo?: string | null;
   childRepos?: Readonly<Record<string, string>>;
-  denyRead?: boolean;
+  denyRead?: string | boolean;
 } = {}): ProjectPickerAdapters {
   return {
     fileSystem: {
-      async assertReadable() { if (input.denyRead) throw Object.assign(new Error("denied"), { code: "EACCES" }); },
+      async assertReadable(path) { if (input.denyRead === true || input.denyRead === path) throw Object.assign(new Error("denied"), { code: "EACCES" }); },
       async isDirectory() { return true; },
       async resolvePath(path) { return path; },
       async readDirectory() { return input.entries ?? []; },
@@ -44,6 +44,14 @@ describe("project picker", () => {
 
   it("reports permission-denied paths without swallowing them as empty", async () => {
     expect(await discoverProjects("/restricted", adapters({ denyRead: true }))).toEqual({ kind: "permission_denied", path: "/restricted" });
+  });
+
+  it("reports a permission-denied child rather than silently omitting it", async () => {
+    const result = await discoverProjects("/workspace", adapters({
+      entries: [{ name: "private-repo", isDirectory: true }],
+      denyRead: "/workspace/private-repo",
+    }));
+    expect(result).toEqual({ kind: "permission_denied", path: "/workspace" });
   });
 
   it("recognizes the selected directory itself as a repository", async () => {
