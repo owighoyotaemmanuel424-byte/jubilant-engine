@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, "phase-0/**", "phase-1/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "phase-0/**", "phase-1/**"]
 permissions:
   contents: read
 jobs:
@@ -17,3 +17,25 @@ jobs:
       # Generate and commit bun.lock after the first local install.
       - run: bun install
       - run: bun run check
+
+  sandbox-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sandbox image
+        run: docker build -t freebuff-sandbox:ci ./infra/sandbox
+      - name: Start sandbox health endpoint
+        run: docker run --detach --rm --name freebuff-sandbox-ci -p 127.0.0.1:8080:8080 freebuff-sandbox:ci
+      - name: Probe /health
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs freebuff-sandbox-ci
+          exit 1
+      - name: Stop sandbox
+        if: always()
+        run: docker stop freebuff-sandbox-ci || true
