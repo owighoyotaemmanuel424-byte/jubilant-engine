@@ -7,7 +7,8 @@ CI PASSED on branch `phase-0/foundation`, commit `25ac1d369c6c56395b787e7fc27a6e
 - [x] Four app stubs and ten package stubs have READMEs.
 - [x] Workspace inventory documented.
 
-Draft review: https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/pull/1
+Merged to `main` through PR #1; merge commit: `cd03d6d63766f9c6b03cbf3204294c2575b6e145`.
+PR #1: https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/pull/1
 Successful Phase 0 run: https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44035465991
 
 ## Workspace inventory (all stubs documented)
@@ -31,7 +32,9 @@ Packages (10):
 - [x] `packages/shared` — README and shared contracts
 
 ## Phase 1 — Agent Runtime
-Implemented on `phase-1/agent-runtime`.
+
+Implemented on `phase-1/agent-runtime`. PR #2 is now retargeted to `main`:
+https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/pull/2
 
 ### Expanded Phase 1 gate — VERIFIED
 - [x] 5/5 scripted fixture tasks produce expected file diffs.
@@ -50,9 +53,6 @@ Test evidence: 12 test files passed, 47 tests passed. No provider credentials or
 ### Remaining constraints
 - Production sandbox isolation, deployment infrastructure, and live-provider credential configuration are intentionally deferred to later phases.
 - No paid infrastructure or model API calls were provisioned.
-
-Phase 2 has not started. Awaiting approval before proceeding.
-
 
 ## Phase 1 baseline correction and coverage map (2026-11-18)
 
@@ -87,7 +87,7 @@ These are the committed Phase 1 suite's 47 runtime test cases (parameterized cas
 - **ripgrep:** Not implemented; no repository search tool or ripgrep subprocess wrapper exists in Phase 1.
 - **terminal exec (sandboxed):** Not implemented; `ManagedProcessRegistry` manages cancellation/cleanup for an abstract process, but Phase 1 has no sandboxed command-execution broker.
 - **web fetch:** Not implemented; no outbound web-fetch tool or policy wrapper exists in Phase 1.
-- **code-map:** Foundation stub only at `packages/code-map/src/index.ts`; no indexing/query implementation or tests. Deferred by DECISIONS.md entry 0009 into the Phase 2 gate.
+- **code-map:** Deferred to Phase 2 by Decision 0009; Phase 1 contains only the foundation stub at `packages/code-map/src/index.ts`, with no indexing/query implementation or tests.
 
 ### Phase 1 closeout status
 
@@ -95,4 +95,57 @@ These are the committed Phase 1 suite's 47 runtime test cases (parameterized cas
 - [x] Coverage map published.
 - [x] Tool inventory published with implementation status, distinguishing generic infrastructure from actual tools.
 - [x] Code-map explicitly deferred into Phase 2 gate by dated decision.
-- [x] Phase 1 documentation closeout complete; Phase 2 is authorized to begin. The expanded Phase 2 gate remains a release/acceptance gate, not a claim that its features are already implemented. Execute the approved branch-management sequence during Phase 2.
+
+## Phase 2 — Implementation report (authorized 2026-11-18)
+
+### Ordered execution log
+
+1. **Branch management — completed.** PR #1 was marked ready after its CI checks were verified green (quality, sandbox-image, and GitGuardian); it was merged into `main` at `cd03d6d63766f9c6b03cbf3204294c2575b6e145`. PR #2 was then retargeted from `phase-0/foundation` to `main`. Branch policy is recorded as Decision 0010 in `DECISIONS.md`. PR #2 currently reports `mergeable: false` after retargeting; resolve/update its base and rerun CI before attempting merge. Do not treat its previous head commit's green Phase 1 run as a current post-retarget merge gate.
+2. **Authentication architecture (gate item 1) — next; not started.**
+3. **Project picker (gate item 2) — pending.** Enumerate repositories/projects and handle an empty directory, a non-git directory, and permission-denied paths. This is a project picker, not a model picker.
+4. **CLI multi-file edit — pending.**
+5. **Terminal broker — pending.** Cancellation must terminate the entire process tree, not only the direct parent. Required integration test starts a shell with a child process, cancels the command, and asserts both parent and child are dead.
+6. **Persistence — pending.**
+7. **Server-authoritative quota — pending.** Test the endpoint directly while bypassing the client, using a forged/exhausted token, and prove the server rejects over-quota work. Exercise the DST boundary through the CLI path, not only a unit helper.
+8. **Sponsored slot — pending.** Add a runtime test proving a sponsored placement cannot render without its visible "Sponsored" label; the Phase 0 type-level guarantee alone is insufficient.
+9. **OpenTUI headless smoke — pending.**
+10. **PTY E2E — pending.** Confirm CLI output uses the logger as its only output sink and has no `console.*` calls before OpenTUI expands.
+11. **Code-map — pending.** Implement repository indexing/query behavior and targeted tests, as required by Decision 0009.
+
+### Phase 1 evidence carried into this report
+
+The complete eight-tool inventory, with each implementation status, is maintained in [PROGRESS.md — Phase 1 tool inventory](#phase-1-tool-inventory--one-line-per-specified-tool). The complete 47-test coverage mapping is maintained in [PROGRESS.md — 47-test coverage mapping](#coverage-mapping--47-runtime-tests-to-phase-1-gate-requirements). Both sections are part of this same report and are the accepted Phase 1 baseline; no filler tests will be added to chase the unreproducible 66.
+
+### Model catalogue (Decision 0007 — copied into Phase 2 report)
+
+The provider catalogue is sourced from official provider documentation checked on 2026-11-17. Prices are USD per million tokens, standard/base token rates, before prompt-cache discounts or surcharges, regional premiums, batch/flex discounts, and taxes. Provider pricing and availability can change; refresh before release and do not treat these values as billing guarantees.
+
+- OpenAI model IDs, context windows, output limits, and model selection: https://developers.openai.com/api/docs/models
+- OpenAI API pricing: https://platform.openai.com/pricing
+- Anthropic model IDs, context windows, and max output: https://platform.claude.com/docs/en/models/overview
+- Anthropic API pricing: https://platform.claude.com/docs/en/about-claude/pricing
+- DeepSeek current model IDs and capabilities: https://api-docs.deepseek.com/api/list-models/
+- DeepSeek model context, output limits, peak/off-peak and cached-token pricing: https://api-docs.deepseek.com/quick_start/pricing/
+
+Catalogue snapshot (2026-11-17):
+- OpenAI: `gpt-6-astra`, `gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6-luna`; 1.05M context and 128K max output. Base input/output USD per MTok: Astra 10/50, Sol 2/10, Terra 1/5, Luna 0.10/0.50.
+- Anthropic: `claude-fable-5-2`, `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`; 1M context and 128K max output. Base input/output USD per MTok: Fable 8/40, Opus 4/20, Sonnet 2/10, Haiku from 0.10/0.50 (higher input tier above 100K prompt tokens).
+- DeepSeek: `deepseek-flash` and `deepseek-v4-pro`; 1M context and maximum 384K output. Peak cache-miss input/output USD per MTok: Flash 0.30/1.20, V4 Pro 1.32/3.96. Off-peak rates are half; cache-hit rates are separately priced.
+
+All production model choice must pass through `resolveModelForTier`. The model catalogue is the only source of provider model identifiers and published price/context metadata.
+
+### Phase 2 acceptance gate — not yet passed
+
+- [ ] Auth architecture and implementation.
+- [ ] Project picker covers repo enumeration, empty directory, non-git directory, and permission-denied handling.
+- [ ] CLI multi-file edit works end-to-end.
+- [ ] Terminal broker is sandboxed; shell-plus-child process-tree cancellation test proves both processes are dead.
+- [ ] Persistence survives process restart and has migration/recovery coverage.
+- [ ] Server-authoritative quota rejects direct endpoint requests with forged/exhausted tokens; DST boundary is tested through CLI.
+- [ ] Sponsored slot runtime test prevents unlabelled rendering.
+- [ ] OpenTUI headless smoke passes.
+- [ ] CLI paths have no `console.*`; logger is the only output sink.
+- [ ] PTY E2E passes.
+- [ ] Code-map indexing/query implementation and targeted tests pass (Decision 0009).
+
+**Phase 3 remains blocked until the user reviews and explicitly approves the completed Phase 2 gate report.**
