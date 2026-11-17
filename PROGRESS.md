@@ -10,6 +10,26 @@ CI PASSED on branch `phase-0/foundation`, commit `25ac1d369c6c56395b787e7fc27a6e
 Draft review: https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/pull/1
 Successful Phase 0 run: https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44035465991
 
+## Workspace inventory (all stubs documented)
+
+Applications:
+- [x] `apps/cli` — README and source stub
+- [x] `apps/desktop` — README and source stub
+- [x] `apps/web` — README and source stub
+- [x] `apps/cloud` — README and source stub
+
+Packages (10):
+- [x] `packages/agent-runtime` — README and runtime source
+- [x] `packages/llm-providers` — README and provider source
+- [x] `packages/code-map` — README and source stub
+- [x] `packages/sandbox-orchestrator` — README and sandbox source
+- [x] `packages/db` — README and source stub
+- [x] `packages/auth` — README and source stub
+- [x] `packages/quota` — README and quota source
+- [x] `packages/ads` — README and ads source
+- [x] `packages/sdk` — README and source stub
+- [x] `packages/shared` — README and shared contracts
+
 ## Phase 1 — Agent Runtime
 Implemented on `phase-1/agent-runtime`.
 
