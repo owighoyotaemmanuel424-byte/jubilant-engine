@@ -20,10 +20,10 @@ Implemented on `phase-1/agent-runtime`.
 - [x] Mid-stream cancellation passes: SSE reader cancellation, in-flight provider request abort, and real OS subprocess termination/drain.
 - [x] Parallel subagent edits pass: disjoint file locks execute concurrently; overlapping edits are rejected.
 - [x] Static model-selection test proves model IDs occur only in the catalogue/resolver and tier selection is performed through `resolveModelForTier`.
-- [x] Full `bun run check` passes: ESLint, TypeScript, Vitest, and all workspace builds.
+- [x] Full `bun run check` passes: ESLint, TypeScript, Vitest, and all workspace builds. The same CI run also builds the sandbox image and probes `/health` successfully.
 
-CI evidence (latest commit `d4d9273de8bbdaaa79013b46f39b2591d2f855a8`):
-https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44036774346
+CI evidence (latest commit `cb6d32598eecc310f1ae4b647d773747aa4c1378`):
+https://github.com/owighoyotaemmanuel424-byte/jubilant-engine/actions/runs/44037058644
 
 Test evidence: 12 test files passed, 47 tests passed. No provider credentials or live model calls were used; provider behavior is covered with recorded HTTP/SSE fixtures.
 
