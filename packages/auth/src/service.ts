@@ -40,6 +40,8 @@ export interface SessionResolver {
   resolve(token: string): Promise<AuthenticatedSession | null>;
 }
 
+export type AuthFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
 export class InvalidAuthenticationError extends Error {
   constructor() {
     super("Authentication could not be completed.");
@@ -219,8 +221,8 @@ export interface CliCredentialStore {
 }
 
 export interface CliSession {
-  readonly user: AuthUser;
-  readonly session: AuthSession;
+  readonly user: Pick<AuthUser, "id" | "email">;
+  readonly session: Pick<AuthSession, "id" | "userId" | "expiresAt">;
 }
 
 export class CliSessionProvider {
@@ -353,7 +355,7 @@ export function createAuthHttpHandler(service: AuthService, options: AuthHttpOpt
 export class HttpSessionResolver implements SessionResolver {
   constructor(
     private readonly apiOrigin: URL,
-    private readonly fetcher: typeof fetch = fetch,
+    private readonly fetcher: AuthFetch = (input, init) => fetch(input, init),
   ) {
     if (apiOrigin.protocol !== "https:" && apiOrigin.hostname !== "localhost") {
       throw new TypeError("Authentication API origin must use HTTPS.");
