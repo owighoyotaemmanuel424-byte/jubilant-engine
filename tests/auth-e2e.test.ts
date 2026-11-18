@@ -91,7 +91,7 @@ class TestIdP implements OAuthIdentityProvider {
     return {
       subject: "test-idp-subject", email: "user@example.test", emailVerified: true, displayName: "Test User",
       nonce: this.lastRequest.nonce, issuer: "https://idp.test", audience: "freebuff-test-client",
-    } as OAuthProfile;
+    };
   }
 }
 
@@ -123,6 +123,17 @@ describe("authentication end-to-end flows", () => {
     expect(session?.session.expiresAt).toBeTruthy();
     expect(idp.lastRequest?.codeVerifier).toBeTruthy();
     await expect(service.completeOAuth("google", state, "valid-test-code")).rejects.toBeInstanceOf(InvalidAuthenticationError);
+  });
+
+
+  it("links a verified OAuth identity to the existing verified-email account", async () => {
+    const { service, store } = fixture();
+    const existing = await store.findOrCreateUserByEmail("user@example.test");
+    const redirect = await service.startOAuth("google", "https://app.example.test/auth/oauth/google/callback");
+    const token = await service.completeOAuth("google", redirect.searchParams.get("state")!, "valid-test-code");
+    expect((await service.resolve(token))?.user.id).toBe(existing.id);
+    expect(store.users.size).toBe(1);
+    expect((await store.findIdentity("google", "test-idp-subject"))?.userId).toBe(existing.id);
   });
 
   it("completes magic-link request, delivery, click, and session establishment", async () => {
