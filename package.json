@@ -1,1 +1,23 @@
-{"name":"freebuff-clone","private":true,"version":"0.1.0","packageManager":"bun@1.2.22","workspaces":["apps/*","packages/*"],"scripts":{"lint":"eslint .","typecheck":"tsc --noEmit","test":"vitest run","build":"bun run --filter '*' build","check":"bun run lint && bun run typecheck && bun run test && bun run build"},"devDependencies":{"@types/bun":"^1.2.22","eslint":"^9.35.0","typescript":"^5.9.2","typescript-eslint":"^8.42.0","vitest":"^3.2.4"}}
+{
+  "name": "freebuff-clone",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "bun@1.2.22",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "bun run --filter '*' build",
+    "check": "bun run lint && bun run typecheck && bun run test && bun run build"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.22",
+    "@types/node": "^22.18.0",
+    "eslint": "^9.35.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
+    "vitest": "^3.2.4"
+  }
+}
