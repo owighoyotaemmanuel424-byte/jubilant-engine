@@ -1,4 +1,4 @@
-import { lstat, mkdir, open, readFile, realpath, rename, stat, unlink } from "node:fs/promises";
+import { lstat, open, readFile, realpath, rename, stat, unlink } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { randomUUID } from "node:crypto";
 import { FileEditCoordinator } from "../../../packages/agent-runtime/src/file-edit-coordinator";
@@ -15,6 +15,7 @@ export interface MultiFileEdit {
 }
 
 export interface MultiFileEditFileSystem {
+  resolveProjectRoot(path: string): Promise<string>;
   resolveTarget(projectRoot: string, relativePath: string): Promise<string>;
   read(path: string): Promise<string | null>;
   writeAtomic(path: string, content: string): Promise<void>;
@@ -55,7 +56,10 @@ function normalizeRelativePath(path: string): string {
   return parts.join("/");
 }
 
+const sharedFileEditCoordinator = new FileEditCoordinator();
+
 const nodeFileSystem: MultiFileEditFileSystem = {
+  async resolveProjectRoot(path) { return realpath(path); },
   async resolveTarget(projectRoot, relativePath) {
     const root = await realpath(projectRoot);
     const target = resolve(root, relativePath);
@@ -126,9 +130,9 @@ export async function applyMultiFileEdit(
   options: MultiFileEditOptions,
 ): Promise<MultiFileEditResult> {
   const validated = validateEdits(edits);
-  const coordinator = options.coordinator ?? new FileEditCoordinator();
+  const coordinator = options.coordinator ?? sharedFileEditCoordinator;
   const fileSystem = options.fileSystem ?? nodeFileSystem;
-  const root = await realpath(options.projectRoot);
+  const root = await fileSystem.resolveProjectRoot(options.projectRoot);
   return coordinator.withFileLocks(validated.edits.map((edit) => edit.path), async () => {
     const resolved = await Promise.all(validated.edits.map(async (edit) => ({ edit, target: await fileSystem.resolveTarget(root, edit.path) })));
     const originals = await Promise.all(resolved.map(async ({ edit, target }) => ({ edit, target, original: await fileSystem.read(target) })));
