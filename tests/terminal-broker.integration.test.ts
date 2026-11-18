@@ -28,7 +28,7 @@ async function waitForChildPid(parentPid: number): Promise<number> {
   while (Date.now() < deadline) {
     try {
       const value = (await readFile(`/proc/${parentPid}/task/${parentPid}/children`, "utf8")).trim();
-      const pid = Number(value.split(/\\s+/)[0]);
+      const pid = Number(value.split(/\s+/)[0]);
       if (Number.isInteger(pid) && pid > 0) return pid;
     } catch {
       // Wait until the shell has spawned its child.
