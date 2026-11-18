@@ -161,7 +161,7 @@ describe("authentication end-to-end flows", () => {
   });
 
   it("makes the same server session abstraction consumable by the CLI", async () => {
-    const { service } = fixture();
+    const { service, handler } = fixture();
     const url = await service.startOAuth("google", "https://app.example.test/auth/oauth/google/callback");
     const token = await service.completeOAuth("google", url.searchParams.get("state")!, "valid-test-code");
     let stored: string | null = null;
