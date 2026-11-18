@@ -28,10 +28,7 @@ export class ManagedProcessRegistry {
     let abortListener: (() => void) | undefined;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      if (signal?.aborted) {
-        await this.terminateAndReap(process);
-        throw new ProcessAbortedError();
-      }
+      if (signal?.aborted) throw new ProcessAbortedError();
 
       const interrupted = new Promise<never>((_, reject) => {
         if (signal) {
