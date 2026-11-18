@@ -134,7 +134,7 @@ export class AuthService implements SessionResolver {
     if (!user) {
       const verifiedEmail = profile.emailVerified ? profile.email?.trim().toLowerCase() ?? null : null;
       user = await this.store.createUser({ email: verifiedEmail, phone: null });
-      identity = await this.store.linkIdentity(user.id, providerName, profile.subject);
+      await this.store.linkIdentity(user.id, providerName, profile.subject);
     }
     return this.issueSession(user);
   }
