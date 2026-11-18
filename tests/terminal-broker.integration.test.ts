@@ -84,6 +84,32 @@ describe.skipIf(!dockerReady)("sandboxed terminal broker integration", () => {
     expect(wire).not.toContain("command-err");
   });
 
+
+  it("keeps SSE framing intact while command stdout and stderr arrive during an active stream", async () => {
+    const commandFrames: Array<{ channel: string; text: string }> = [];
+    const agentFrames: string[] = [];
+    let exitCode = -1;
+    async function* activeAgentStream() {
+      yield 'data: {"type":"text_delta","text":"before"}\n\n';
+      const command = runSandboxCommand(
+        ["/bin/sh", "-c", "printf 'stream-out\\n'; printf 'stream-err\\n' >&2"],
+        { cwd: "/workspace", onOutputFrame: (frame) => commandFrames.push(frame) },
+      );
+      yield 'data: {"type":"status","text":"terminal_running"}\n\n';
+      const result = await command;
+      exitCode = result.exitCode;
+      yield 'data: {"type":"text_delta","text":"after"}\n\n';
+    }
+    for await (const frame of activeAgentStream()) agentFrames.push(frame);
+    expect(exitCode).toBe(0);
+    expect(commandFrames).toContainEqual({ channel: "stdout", text: "stream-out" });
+    expect(commandFrames).toContainEqual({ channel: "stderr", text: "stream-err" });
+    const wire = agentFrames.join("");
+    expect(wire.split("\n\n")).toHaveLength(4);
+    expect(wire).not.toContain("stream-out");
+    expect(wire).not.toContain("stream-err");
+  });
+
   it("confines writes to tmpfs workspace and denies sudo and mount attempts", async () => {
     const result = await runSandboxCommand([
       "/bin/sh", "-c",
