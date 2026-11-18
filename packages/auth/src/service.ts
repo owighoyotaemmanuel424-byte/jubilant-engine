@@ -28,11 +28,12 @@ export interface OAuthProviderConfig {
   readonly provider: OAuthIdentityProvider;
   readonly issuer: string;
   readonly audience: string;
+  readonly allowedRedirectUris: readonly string[];
 }
 
 export interface AuthenticatedSession {
-  readonly user: AuthUser;
-  readonly session: AuthSession;
+  readonly user: Pick<AuthUser, "id" | "email">;
+  readonly session: Pick<AuthSession, "id" | "userId" | "expiresAt">;
 }
 
 export interface SessionResolver {
@@ -84,7 +85,7 @@ export class AuthService implements SessionResolver {
     const config = this.providers.get(providerName);
     if (!config || config.provider.provider !== providerName) throw new InvalidAuthenticationError();
     const redirect = new URL(redirectUri);
-    if (redirect.origin !== this.publicOrigin.origin) throw new InvalidAuthenticationError();
+    if (redirect.origin !== this.publicOrigin.origin || !config.allowedRedirectUris.includes(redirect.toString())) throw new InvalidAuthenticationError();
 
     const state = createOpaqueToken();
     const nonce = createOpaqueToken();
@@ -182,7 +183,7 @@ export class AuthService implements SessionResolver {
     const session = await this.store.findSessionByTokenHash(tokenHash);
     if (!session || session.revokedAt !== null || Date.parse(session.expiresAt) <= this.now().getTime()) return null;
     const user = await this.store.findUserById(session.userId);
-    return user ? { user, session } : null;
+    return user ? { user: { id: user.id, email: user.email }, session: { id: session.id, userId: session.userId, expiresAt: session.expiresAt } } : null;
   }
 
   async revoke(token: string): Promise<void> {
@@ -331,7 +332,7 @@ export function createAuthHttpHandler(service: AuthService, options: AuthHttpOpt
       const token = readToken(request);
       const session = token ? await service.resolve(token) : null;
       if (!session) return json({ error: "unauthenticated" }, 401, { "cache-control": "no-store" });
-      return json({ user: { id: session.user.id, email: session.user.email }, expiresAt: session.session.expiresAt }, 200, { "cache-control": "no-store" });
+      return json({ user: session.user, session: session.session }, 200, { "cache-control": "no-store" });
     }
 
     if (request.method === "POST" && url.pathname === "/auth/logout") {
