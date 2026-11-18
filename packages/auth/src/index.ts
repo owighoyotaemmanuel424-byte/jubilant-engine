@@ -50,6 +50,9 @@ export interface OAuthAuthorizationRequest {
 }
 
 export interface OAuthProfile {
+  readonly issuer: string;
+  readonly audience: string;
+  readonly nonce: string;
   readonly subject: string;
   readonly email: string | null;
   readonly emailVerified: boolean;
@@ -59,6 +62,7 @@ export interface OAuthProfile {
 export interface OAuthIdentityProvider {
   readonly provider: "google" | "github" | "apple";
   createAuthorizationUrl(request: OAuthAuthorizationRequest): URL;
+  /** Exchange the code and verify provider signature, expiry, issuer, audience, nonce, and PKCE before returning claims. */
   exchangeCode(code: string, codeVerifier: string, redirectUri: string): Promise<OAuthProfile>;
 }
 
