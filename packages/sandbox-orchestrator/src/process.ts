@@ -123,7 +123,7 @@ export async function runSandboxCommand(
   const program = command[0];
   if (program === undefined) throw new Error("Missing executable");
   const cwd = workspacePath(options.cwd);
-  const image = options.sandboxImage ?? process.env.FREEBUFF_SANDBOX_IMAGE ?? "freebuff-sandbox:ci";
+  const image = options.sandboxImage ?? process.env["FREEBUFF_SANDBOX_IMAGE"] ?? "freebuff-sandbox:ci";
   const containerName = "freebuff-exec-" + randomUUID();
   const args = [
     "run", "--rm", "--name", containerName,
