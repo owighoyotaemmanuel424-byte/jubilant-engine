@@ -7,7 +7,7 @@ import {
   type AuthStore,
   type OAuthAttempt,
   type OAuthIdentityProvider,
-} from "../packages/auth/src/index";
+} from "../packages/auth/src/index";\nimport { createCliSessionProvider } from "../apps/cli/src/session";
 import type {
   AuthChallenge, AuthIdentity, AuthSession, AuthUser, OAuthAuthorizationRequest, OAuthProfile,
 } from "../packages/auth/src/index";
@@ -166,7 +166,7 @@ describe("authentication end-to-end flows", () => {
       async writeSessionToken(value: string) { stored = value; },
       async clearSessionToken() { stored = null; },
     };
-    const cli = new CliSessionProvider(credentials, service);
+    const cli = createCliSessionProvider(credentials, service);
     await cli.accept(token);
     expect((await cli.require()).user.email).toBe("user@example.test");
     await service.revoke(token);
