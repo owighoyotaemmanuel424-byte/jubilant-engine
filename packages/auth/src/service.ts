@@ -127,7 +127,7 @@ export class AuthService implements SessionResolver {
       !profile.subject
     ) throw new InvalidAuthenticationError();
 
-    let identity: AuthIdentity | null = await this.store.findIdentity(providerName, profile.subject);
+    const identity: AuthIdentity | null = await this.store.findIdentity(providerName, profile.subject);
     let user: AuthUser | null = identity ? await this.store.findUserById(identity.userId) : null;
     if (identity && !user) throw new InvalidAuthenticationError();
     if (!user) {
