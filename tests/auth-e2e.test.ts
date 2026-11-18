@@ -2,12 +2,13 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
   AuthService,
-  CliSessionProvider,
   InvalidAuthenticationError,
   type AuthStore,
   type OAuthAttempt,
   type OAuthIdentityProvider,
-} from "../packages/auth/src/index";\nimport { createCliSessionProvider } from "../apps/cli/src/session";
+  type OAuthProviderConfig,
+} from "../packages/auth/src/index";
+import { createCliSessionProvider } from "../apps/cli/src/session";
 import type {
   AuthChallenge, AuthIdentity, AuthSession, AuthUser, OAuthAuthorizationRequest, OAuthProfile,
 } from "../packages/auth/src/index";
@@ -148,7 +149,7 @@ describe("authentication end-to-end flows", () => {
   });
 
   it("rejects a revoked session when that token is used again", async () => {
-    const { service, idp } = fixture();
+    const { service } = fixture();
     const url = await service.startOAuth("google", "https://app.example.test/auth/callback");
     const token = await service.completeOAuth("google", url.searchParams.get("state")!, "valid-test-code");
     expect(await service.resolve(token)).not.toBeNull();
