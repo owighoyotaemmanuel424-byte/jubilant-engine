@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
   AuthService,
+  createAuthHttpHandler,
   InvalidAuthenticationError,
   type AuthStore,
   type OAuthAttempt,
@@ -99,13 +100,15 @@ function fixture() {
   const idp = new TestIdP();
   const sent: URL[] = [];
   let now = new Date("2026-11-18T00:00:00.000Z");
+  const publicOrigin = new URL("https://app.example.test");
   const service = new AuthService(store, new Map<"google" | "github" | "apple", OAuthProviderConfig>([["google", {
     provider: idp, issuer: "https://idp.test", audience: "freebuff-test-client",
   }]]), {
     async sendEmailMagicLink(_destination, url) { sent.push(url); },
     async sendPhoneOtp() {},
-  }, new URL("https://app.example.test"), () => new Date(now));
-  return { store, idp, sent, service, setNow: (value: Date) => { now = value; } };
+  }, publicOrigin, () => new Date(now));
+  const handler = createAuthHttpHandler(service, { publicOrigin });
+  return { store, idp, sent, service, handler, setNow: (value: Date) => { now = value; } };
 }
 
 describe("authentication end-to-end flows", () => {
@@ -173,5 +176,71 @@ describe("authentication end-to-end flows", () => {
     await service.revoke(token);
     expect(await cli.current()).toBeNull();
     expect(stored).toBeNull();
+  });
+});
+
+describe("authentication HTTP end-to-end routes", () => {
+  it("runs OAuth start redirect, IdP callback, and authenticated session endpoint", async () => {
+    const { handler } = fixture();
+    const start = await handler(new Request("https://app.example.test/auth/oauth/google/start?redirect_uri=https%3A%2F%2Fapp.example.test%2Fauth%2Foauth%2Fgoogle%2Fcallback"));
+    expect(start.status).toBe(302);
+    const idpUrl = new URL(start.headers.get("location")!);
+    const callback = await handler(new Request("https://app.example.test/auth/oauth/google/callback?state=" + idpUrl.searchParams.get("state") + "&code=valid-test-code"));
+    expect(callback.status).toBe(200);
+    const cookie = callback.headers.get("set-cookie")!.split(";")[0]!;
+    const session = await handler(new Request("https://app.example.test/auth/session", { headers: { cookie } }));
+    expect(session.status).toBe(200);
+    expect((await session.json()).user.email).toBe("user@example.test");
+  });
+
+  it("runs magic-link HTTP request, delivery, consume, and session lookup", async () => {
+    const { handler, sent, store } = fixture();
+    const request = await handler(new Request("https://app.example.test/auth/magic-link/request", {
+      method: "POST", headers: { origin: "https://app.example.test", "content-type": "application/json" },
+      body: JSON.stringify({ email: "user@example.test" }),
+    }));
+    expect(request.status).toBe(202);
+    const digest = createHash("sha256").update("user@example.test").digest("hex");
+    const user = await store.createUser({ email: "user@example.test", phone: null });
+    store.destinations.set(digest, user);
+    const token = sent[0]!.searchParams.get("token")!;
+    const consume = await handler(new Request("https://app.example.test/auth/magic-link/consume", {
+      method: "POST", headers: { origin: "https://app.example.test", "content-type": "application/json" },
+      body: JSON.stringify({ token }),
+    }));
+    expect(consume.status).toBe(200);
+    const cookie = consume.headers.get("set-cookie")!.split(";")[0]!;
+    const session = await handler(new Request("https://app.example.test/auth/session", { headers: { cookie } }));
+    expect(session.status).toBe(200);
+  });
+
+  it("rejects expired magic links through the HTTP endpoint without exposing the token", async () => {
+    const { handler, sent, setNow } = fixture();
+    await handler(new Request("https://app.example.test/auth/magic-link/request", {
+      method: "POST", headers: { origin: "https://app.example.test", "content-type": "application/json" },
+      body: JSON.stringify({ email: "user@example.test" }),
+    }));
+    const token = sent[0]!.searchParams.get("token")!;
+    setNow(new Date("2026-11-18T00:16:00.000Z"));
+    const response = await handler(new Request("https://app.example.test/auth/magic-link/consume", {
+      method: "POST", headers: { origin: "https://app.example.test", "content-type": "application/json" },
+      body: JSON.stringify({ token }),
+    }));
+    expect(response.status).toBe(401);
+    expect(await response.text()).not.toContain(token);
+  });
+
+  it("rejects a revoked cookie session on its next HTTP use", async () => {
+    const { handler } = fixture();
+    const start = await handler(new Request("https://app.example.test/auth/oauth/google/start?redirect_uri=https%3A%2F%2Fapp.example.test%2Fauth%2Foauth%2Fgoogle%2Fcallback"));
+    const idpUrl = new URL(start.headers.get("location")!);
+    const callback = await handler(new Request("https://app.example.test/auth/oauth/google/callback?state=" + idpUrl.searchParams.get("state") + "&code=valid-test-code"));
+    const cookie = callback.headers.get("set-cookie")!.split(";")[0]!;
+    const logout = await handler(new Request("https://app.example.test/auth/logout", {
+      method: "POST", headers: { origin: "https://app.example.test", cookie },
+    }));
+    expect(logout.status).toBe(204);
+    const nextUse = await handler(new Request("https://app.example.test/auth/session", { headers: { cookie } }));
+    expect(nextUse.status).toBe(401);
   });
 });
