@@ -252,3 +252,95 @@ export class CliSessionProvider {
     await this.credentials.clearSessionToken();
   }
 }
+
+
+export interface AuthHttpOptions {
+  readonly publicOrigin: URL;
+  readonly cookieName?: string;
+}
+
+/** Framework-neutral HTTP adapter used by web and CLI-facing auth APIs. */
+export function createAuthHttpHandler(service: AuthService, options: AuthHttpOptions) {
+  const cookieName = options.cookieName ?? "__Host-freebuff_session";
+  const json = (body: unknown, status = 200, headers?: HeadersInit) =>
+    new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8", ...Object.fromEntries(new Headers(headers).entries()) } });
+  const originAllowed = (request: Request) => request.headers.get("origin") === options.publicOrigin.origin;
+  const readToken = (request: Request): string | null => {
+    const authorization = request.headers.get("authorization");
+    if (authorization?.startsWith("Bearer ")) return authorization.slice(7);
+    const cookie = request.headers.get("cookie") ?? "";
+    const item = cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(cookieName + "="));
+    return item ? decodeURIComponent(item.slice(cookieName.length + 1)) : null;
+  };
+  const setCookie = (token: string) =>
+    cookieName + "=" + encodeURIComponent(token) + "; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000";
+  const clearCookie = () => cookieName + "=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
+
+  return async (request: Request): Promise<Response> => {
+    const url = new URL(request.url);
+    if (url.origin !== options.publicOrigin.origin) return json({ error: "not_found" }, 404);
+
+    const oauthStart = url.pathname.match(/^\/auth\/oauth\/(google|github|apple)\/start$/);
+    if (request.method === "GET" && oauthStart) {
+      try {
+        const redirectUri = url.searchParams.get("redirect_uri");
+        if (!redirectUri) return json({ error: "invalid_request" }, 400);
+        const target = await service.startOAuth(oauthStart[1] as "google" | "github" | "apple", redirectUri);
+        return new Response(null, { status: 302, headers: { location: target.toString(), "cache-control": "no-store" } });
+      } catch {
+        return json({ error: "authentication_failed" }, 400);
+      }
+    }
+
+    const oauthCallback = url.pathname.match(/^\/auth\/oauth\/(google|github|apple)\/callback$/);
+    if (request.method === "GET" && oauthCallback) {
+      try {
+        const state = url.searchParams.get("state") ?? "";
+        const code = url.searchParams.get("code") ?? "";
+        const token = await service.completeOAuth(oauthCallback[1] as "google" | "github" | "apple", state, code);
+        return json({ authenticated: true }, 200, { "set-cookie": setCookie(token), "cache-control": "no-store" });
+      } catch {
+        return json({ error: "authentication_failed" }, 401);
+      }
+    }
+
+    if (request.method === "POST" && url.pathname === "/auth/magic-link/request") {
+      if (!originAllowed(request)) return json({ error: "forbidden" }, 403);
+      try {
+        const body = await request.json() as { email?: unknown };
+        await service.requestMagicLink(typeof body.email === "string" ? body.email : "");
+      } catch {
+        // Keep the public response non-enumerating and structurally uniform.
+      }
+      return json({ accepted: true }, 202, { "cache-control": "no-store" });
+    }
+
+    if (request.method === "POST" && url.pathname === "/auth/magic-link/consume") {
+      if (!originAllowed(request)) return json({ error: "forbidden" }, 403);
+      try {
+        const body = await request.json() as { token?: unknown };
+        if (typeof body.token !== "string") throw new InvalidAuthenticationError();
+        const token = await service.consumeMagicLink(body.token);
+        return json({ authenticated: true }, 200, { "set-cookie": setCookie(token), "cache-control": "no-store" });
+      } catch {
+        return json({ error: "authentication_failed" }, 401);
+      }
+    }
+
+    if (request.method === "GET" && url.pathname === "/auth/session") {
+      const token = readToken(request);
+      const session = token ? await service.resolve(token) : null;
+      if (!session) return json({ error: "unauthenticated" }, 401, { "cache-control": "no-store" });
+      return json({ user: { id: session.user.id, email: session.user.email }, expiresAt: session.session.expiresAt }, 200, { "cache-control": "no-store" });
+    }
+
+    if (request.method === "POST" && url.pathname === "/auth/logout") {
+      if (!originAllowed(request)) return json({ error: "forbidden" }, 403);
+      const token = readToken(request);
+      if (token) await service.revoke(token);
+      return new Response(null, { status: 204, headers: { "set-cookie": clearCookie(), "cache-control": "no-store" } });
+    }
+
+    return json({ error: "not_found" }, 404);
+  };
+}
