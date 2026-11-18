@@ -167,8 +167,8 @@ export function createMultiFileEditTool(options: MultiFileEditOptions): RuntimeT
   return {
     name: "multi_file_edit",
     async execute(input) {
-      if (!Array.isArray(input.files)) throw new TypeError("multi_file_edit requires a files array.");
-      const result = await applyMultiFileEdit(input.files as MultiFileEdit[], options);
+      if (!Array.isArray(input["files"])) throw new TypeError("multi_file_edit requires a files array.");
+      const result = await applyMultiFileEdit(input["files"] as MultiFileEdit[], options);
       return { changed: result.changed, totalBytes: result.totalBytes };
     },
   };
