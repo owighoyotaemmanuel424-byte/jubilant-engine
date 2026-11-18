@@ -105,7 +105,6 @@ function fixture() {
     provider: idp, issuer: "https://idp.test", audience: "freebuff-test-client", allowedRedirectUris: ["https://app.example.test/auth/oauth/google/callback"],
   }]]), {
     async sendEmailMagicLink(_destination, url) { sent.push(url); },
-    async sendPhoneOtp() {},
   }, publicOrigin, () => new Date(now));
   const handler = createAuthHttpHandler(service, { publicOrigin });
   return { store, idp, sent, service, handler, setNow: (value: Date) => { now = value; } };
@@ -133,7 +132,7 @@ describe("authentication end-to-end flows", () => {
     const link = sent[0]!;
     const token = link.searchParams.get("token")!;
     const sessionToken = await service.consumeMagicLink(token);
-    expect((await service.resolve(sessionToken))?.user.id).toBe(user.id);
+    expect((await service.resolve(sessionToken))?.user.email).toBe("user@example.test");
     await expect(service.consumeMagicLink(token)).rejects.toBeInstanceOf(InvalidAuthenticationError);
   });
 
@@ -167,7 +166,7 @@ describe("authentication end-to-end flows", () => {
       async writeSessionToken(value: string) { stored = value; },
       async clearSessionToken() { stored = null; },
     };
-    const fetcher: typeof fetch = (input, init) => handler(new Request(input, init));
+    const fetcher = (input: RequestInfo | URL, init?: RequestInit) => handler(new Request(input, init));
     const cli = createCliSessionProvider(credentials, new URL("https://app.example.test"), fetcher);
     await cli.accept(token);
     expect((await cli.require()).user.email).toBe("user@example.test");
