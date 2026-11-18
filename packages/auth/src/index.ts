@@ -33,6 +33,7 @@ export interface AuthSession {
 export interface AuthChallenge {
   readonly id: string;
   readonly method: "email_magic_link" | "phone_otp";
+  readonly userId: string;
   readonly destinationHash: string;
   readonly secretHash: string;
   readonly expiresAt: string;
@@ -72,7 +73,8 @@ export interface AuthRepository {
   linkIdentity(userId: string, provider: AuthProvider, subject: string): Promise<AuthIdentity>;
   createSession(input: Omit<AuthSession, "id" | "createdAt" | "lastSeenAt" | "revokedAt">): Promise<AuthSession>;
   findSessionByTokenHash(tokenHash: string): Promise<AuthSession | null>;
-  findUserByVerifiedEmailDigest(destinationHash: string): Promise<AuthUser | null>;
+  findOrCreateUserByEmail(email: string): Promise<AuthUser>;
+  verifyUserEmail(userId: string, verifiedAt: string): Promise<AuthUser | null>;
   revokeSession(sessionId: string, revokedAt: string): Promise<void>;
   revokeAllSessions(userId: string, revokedAt: string): Promise<void>;
   consumeChallengeAtomically(secretHash: string, now: string): Promise<AuthChallenge | null>;
