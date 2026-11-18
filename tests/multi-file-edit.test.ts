@@ -6,6 +6,7 @@ function memoryFs(initial: Record<string, string> = {}) {
   const files = new Map(Object.entries(initial));
   let writes = 0;
   const fs: MultiFileEditFileSystem = {
+    async resolveProjectRoot(path) { return path; },
     async resolveTarget(_root, path) { return path; },
     async read(path) { return files.get(path) ?? null; },
     async writeAtomic(path, content) { writes += 1; if (path === "b.ts" && failSecond) throw new Error("simulated disk failure"); files.set(path, content); },
