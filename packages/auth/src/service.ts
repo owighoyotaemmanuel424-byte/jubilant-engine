@@ -121,11 +121,10 @@ export class AuthService implements SessionResolver {
     } catch {
       throw new InvalidAuthenticationError();
     }
-    const claims = profile as OAuthProfile & { nonce?: string; issuer?: string; audience?: string };
     if (
-      claims.nonce !== attempt.nonce ||
-      claims.issuer !== config.issuer ||
-      claims.audience !== config.audience ||
+      profile.nonce !== attempt.nonce ||
+      profile.issuer !== config.issuer ||
+      profile.audience !== config.audience ||
       !profile.subject
     ) throw new InvalidAuthenticationError();
 
@@ -133,9 +132,12 @@ export class AuthService implements SessionResolver {
     let user: AuthUser | null = identity ? await this.store.findUserById(identity.userId) : null;
     if (identity && !user) throw new InvalidAuthenticationError();
     if (!user) {
-      const verifiedEmail = profile.emailVerified ? profile.email?.trim().toLowerCase() ?? null : null;
-      user = await this.store.createUser({ email: verifiedEmail, phone: null });
-      if (verifiedEmail) user = (await this.store.verifyUserEmail(user.id, this.now().toISOString())) ?? user;
+      if (profile.emailVerified && profile.email) {
+        user = await this.store.findOrCreateUserByEmail(profile.email.trim().toLowerCase());
+        user = (await this.store.verifyUserEmail(user.id, this.now().toISOString())) ?? user;
+      } else {
+        user = await this.store.createUser({ email: null, phone: null });
+      }
       await this.store.linkIdentity(user.id, providerName, profile.subject);
     }
     return this.issueSession(user);
