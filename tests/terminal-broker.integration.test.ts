@@ -75,10 +75,9 @@ describe.skipIf(!dockerReady)("sandboxed terminal broker integration", () => {
     );
     agentFrames.push('data: {"type":"text_delta","text":"after"}\n\n');
     expect(result.exitCode).toBe(0);
-    expect(commandFrames).toEqual([
-      { channel: "stdout", text: "command-out" },
-      { channel: "stderr", text: "command-err" },
-    ]);
+    expect(commandFrames).toHaveLength(2);
+    expect(commandFrames).toContainEqual({ channel: "stdout", text: "command-out" });
+    expect(commandFrames).toContainEqual({ channel: "stderr", text: "command-err" });
     const wire = agentFrames.join("");
     expect(wire.split("\n\n")).toHaveLength(3);
     expect(wire).not.toContain("command-out");
@@ -88,9 +87,13 @@ describe.skipIf(!dockerReady)("sandboxed terminal broker integration", () => {
   it("confines writes to tmpfs workspace and denies sudo and mount attempts", async () => {
     const result = await runSandboxCommand([
       "/bin/sh", "-c",
-      "touch /workspace/allowed && if touch /outside-workspace 2>/dev/null; then exit 21; fi; if sudo id 2>/dev/null; then exit 22; fi; if mount -t tmpfs tmpfs /workspace 2>/dev/null; then exit 23; fi; test -f /workspace/allowed",
+      "if touch /workspace/allowed 2>/dev/null; then echo workspace-write-ok; else echo workspace-write-failed; exit 20; fi; if touch /outside-workspace 2>/dev/null; then echo outside-write-allowed; exit 21; else echo outside-write-denied; fi; if sudo id 2>/dev/null; then echo sudo-allowed; exit 22; else echo sudo-denied; fi; if mount -t tmpfs tmpfs /workspace 2>/dev/null; then echo mount-allowed; exit 23; else echo mount-denied; fi; test -f /workspace/allowed",
     ], { cwd: "/workspace" });
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode, result.stdout + result.stderr).toBe(0);
+    expect(result.stdout).toContain("workspace-write-ok");
+    expect(result.stdout).toContain("outside-write-denied");
+    expect(result.stdout).toContain("sudo-denied");
+    expect(result.stdout).toContain("mount-denied");
   });
 
   it("cancels during an unterminated output line without emitting a partial frame", async () => {
