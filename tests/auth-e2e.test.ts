@@ -20,13 +20,12 @@ class TestStore implements AuthStore {
   sessions = new Map<string, AuthSession>();
   challenges = new Map<string, AuthChallenge>();
   oauth = new Map<string, OAuthAttempt>();
-  destinations = new Map<string, AuthUser>();
   async findIdentity(provider: AuthIdentity["provider"], subject: string) {
     return this.identities.get(provider + ":" + subject) ?? null;
   }
   async createUser(input: Pick<AuthUser, "email" | "phone">) {
     const user: AuthUser = { id: "user-" + (this.users.size + 1), email: input.email,
-      emailVerifiedAt: input.email ? new Date().toISOString() : null, phone: input.phone,
+      emailVerifiedAt: null, phone: input.phone,
       phoneVerifiedAt: null, createdAt: new Date().toISOString() };
     this.users.set(user.id, user);
     return user;
@@ -46,7 +45,8 @@ class TestStore implements AuthStore {
     return [...this.sessions.values()].find((session) => session.tokenHash === hash) ?? null;
   }
   async findUserById(id: string) { return this.users.get(id) ?? null; }
-  async findUserByVerifiedEmailDigest(hash: string) { return this.destinations.get(hash) ?? null; }
+  async findOrCreateUserByEmail(email: string) { return [...this.users.values()].find((user) => user.email === email) ?? this.createUser({ email, phone: null }); }
+  async verifyUserEmail(userId: string, verifiedAt: string) { const user = this.users.get(userId); if (!user) return null; const verified = { ...user, emailVerifiedAt: verifiedAt }; this.users.set(userId, verified); return verified; }
   async revokeSession(id: string, at: string) {
     const session = this.sessions.get(id);
     if (session) this.sessions.set(id, { ...session, revokedAt: at });
@@ -132,9 +132,6 @@ describe("authentication end-to-end flows", () => {
     expect(sent).toHaveLength(1);
     const link = sent[0]!;
     const token = link.searchParams.get("token")!;
-    const digest = createHash("sha256").update("user@example.test").digest("hex");
-    const user = await store.createUser({ email: "user@example.test", phone: null });
-    store.destinations.set(digest, user);
     const sessionToken = await service.consumeMagicLink(token);
     expect((await service.resolve(sessionToken))?.user.id).toBe(user.id);
     await expect(service.consumeMagicLink(token)).rejects.toBeInstanceOf(InvalidAuthenticationError);
@@ -201,9 +198,6 @@ describe("authentication HTTP end-to-end routes", () => {
       body: JSON.stringify({ email: "user@example.test" }),
     }));
     expect(request.status).toBe(202);
-    const digest = createHash("sha256").update("user@example.test").digest("hex");
-    const user = await store.createUser({ email: "user@example.test", phone: null });
-    store.destinations.set(digest, user);
     const token = sent[0]!.searchParams.get("token")!;
     const consume = await handler(new Request("https://app.example.test/auth/magic-link/consume", {
       method: "POST", headers: { origin: "https://app.example.test", "content-type": "application/json" },
