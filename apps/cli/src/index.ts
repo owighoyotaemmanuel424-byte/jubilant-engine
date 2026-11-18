@@ -9,3 +9,6 @@ export type {
   ProjectPickerFileSystem,
   ProjectPickerResult,
 } from "./project-picker";
+
+export { applyMultiFileEdit, createMultiFileEditTool, MultiFileEditConflictError } from "./multi-file-edit";
+export type { MultiFileEdit, MultiFileEditFileSystem, MultiFileEditOptions, MultiFileEditResult } from "./multi-file-edit";
