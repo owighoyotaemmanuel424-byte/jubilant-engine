@@ -1,15 +1,16 @@
 import {
   CliSessionProvider,
+  HttpSessionResolver,
   type CliCredentialStore,
-  type SessionResolver,
 } from "../../../packages/auth/src/index";
 
 /** The CLI uses the shared server-session resolver and OS credential-store adapter. */
 export function createCliSessionProvider(
   credentials: CliCredentialStore,
-  resolver: SessionResolver,
+  apiOrigin: URL,
+  fetcher: typeof fetch = fetch,
 ): CliSessionProvider {
-  return new CliSessionProvider(credentials, resolver);
+  return new CliSessionProvider(credentials, new HttpSessionResolver(apiOrigin, fetcher));
 }
 
 export { CliSessionProvider };
