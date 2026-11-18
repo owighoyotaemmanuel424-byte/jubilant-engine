@@ -127,7 +127,7 @@ describe("authentication end-to-end flows", () => {
   });
 
   it("completes magic-link request, delivery, click, and session establishment", async () => {
-    const { service, store, sent } = fixture();
+    const { service, sent } = fixture();
     await service.requestMagicLink("User@Example.Test");
     expect(sent).toHaveLength(1);
     const link = sent[0]!;
@@ -192,7 +192,7 @@ describe("authentication HTTP end-to-end routes", () => {
   });
 
   it("runs magic-link HTTP request, delivery, consume, and session lookup", async () => {
-    const { handler, sent, store } = fixture();
+    const { handler, sent } = fixture();
     const request = await handler(new Request("https://app.example.test/auth/magic-link/request", {
       method: "POST", headers: { origin: "https://app.example.test", "content-type": "application/json" },
       body: JSON.stringify({ email: "user@example.test" }),
