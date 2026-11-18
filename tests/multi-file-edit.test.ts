@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { FileEditConflictError, FileEditCoordinator } from "../packages/agent-runtime/src";
 import { applyMultiFileEdit, createMultiFileEditTool, MultiFileEditConflictError, type MultiFileEditFileSystem } from "../apps/cli/src/multi-file-edit";
+import { runAgentTurn } from "../packages/agent-runtime/src/agent-loop";
+import { resolveModelForTier } from "../packages/llm-providers/src/resolve-model";
+import type { ProviderClient } from "../packages/llm-providers/src/provider-types";
 
 function memoryFs(initial: Record<string, string> = {}) {
   const files = new Map(Object.entries(initial));
@@ -76,6 +79,30 @@ describe("CLI multi-file edit", () => {
     await expect(applyMultiFileEdit([{ path: "a.ts", expectedContent: "old", content: "second" }], { projectRoot: "/workspace", coordinator, fileSystem: memory.fs })).rejects.toBeInstanceOf(FileEditConflictError);
     release?.();
     await first;
+  });
+
+  it("executes a multi-file batch through the real agent tool-dispatch loop", async () => {
+    const memory = memoryFs({ "one.ts": "before-one", "two.ts": "before-two" });
+    let turn = 0;
+    const provider: ProviderClient = { async complete() {
+      turn += 1;
+      if (turn === 1) return { provider: "deepseek", model: "fixture", text: "Applying coordinated edits.", toolCalls: [{
+        id: "multi-edit-1", name: "multi_file_edit", arguments: { files: [
+          { path: "one.ts", expectedContent: "before-one", content: "after-one" },
+          { path: "two.ts", expectedContent: "before-two", content: "after-two" },
+        ] },
+      }] };
+      return { provider: "deepseek", model: "fixture", text: "Both files updated.", toolCalls: [] };
+    } };
+    const result = await runAgentTurn(provider, {
+      model: resolveModelForTier("deepseek", "free"),
+      messages: [{ role: "user", content: "Update both files together." }],
+      tools: [createMultiFileEditTool({ projectRoot: "/workspace", fileSystem: memory.fs })],
+    });
+    expect(result.toolCalls).toBe(1);
+    expect(result.text).toContain("Both files updated.");
+    expect(memory.files.get("one.ts")).toBe("after-one");
+    expect(memory.files.get("two.ts")).toBe("after-two");
   });
 
   it("exposes the batch operation as a runtime tool", async () => {
