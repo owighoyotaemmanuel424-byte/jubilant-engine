@@ -45,7 +45,7 @@ function isMissing(error: unknown): boolean {
 }
 
 function normalizeRelativePath(path: string): string {
-  if (typeof path !== "string" || path.length === 0 || path.includes("\\0") || isAbsolute(path)) {
+  if (typeof path !== "string" || path.length === 0 || path.includes("\0") || isAbsolute(path)) {
     throw new TypeError("Edit paths must be non-empty relative paths.");
   }
   const normalized = path.replaceAll("\\", "/");
