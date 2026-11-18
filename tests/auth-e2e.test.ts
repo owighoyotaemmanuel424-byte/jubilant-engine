@@ -121,7 +121,7 @@ describe("authentication end-to-end flows", () => {
     const token = await service.completeOAuth("google", state, "valid-test-code");
     const session = await service.resolve(token);
     expect(session?.user.email).toBe("user@example.test");
-    expect(session?.session.revokedAt).toBeNull();
+    expect(session?.session.expiresAt).toBeTruthy();
     expect(idp.lastRequest?.codeVerifier).toBeTruthy();
     await expect(service.completeOAuth("google", state, "valid-test-code")).rejects.toBeInstanceOf(InvalidAuthenticationError);
   });
@@ -170,7 +170,8 @@ describe("authentication end-to-end flows", () => {
       async writeSessionToken(value: string) { stored = value; },
       async clearSessionToken() { stored = null; },
     };
-    const cli = createCliSessionProvider(credentials, service);
+    const fetcher: typeof fetch = (input, init) => handler(new Request(input, init));
+    const cli = createCliSessionProvider(credentials, new URL("https://app.example.test"), fetcher);
     await cli.accept(token);
     expect((await cli.require()).user.email).toBe("user@example.test");
     await service.revoke(token);
