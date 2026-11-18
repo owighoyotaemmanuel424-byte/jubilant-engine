@@ -23,6 +23,7 @@ export class ManagedProcessRegistry {
   get activeCount(): number { return this.active.size; }
 
   async waitFor(process: ManagedProcess, signal?: AbortSignal, timeoutMs?: number): Promise<number> {
+    if (timeoutMs !== undefined && (!Number.isFinite(timeoutMs) || timeoutMs <= 0)) throw new RangeError("timeoutMs must be positive");
     this.active.add(process);
     let abortListener: (() => void) | undefined;
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -38,7 +39,6 @@ export class ManagedProcessRegistry {
           signal.addEventListener("abort", abortListener, { once: true });
         }
         if (timeoutMs !== undefined) {
-          if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new RangeError("timeoutMs must be positive");
           timeout = setTimeout(() => reject(new ProcessTimedOutError()), timeoutMs);
         }
       });
