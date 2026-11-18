@@ -345,3 +345,52 @@ export function createAuthHttpHandler(service: AuthService, options: AuthHttpOpt
     return json({ error: "not_found" }, 404);
   };
 }
+
+
+/** Resolves CLI bearer credentials through the same server session endpoint as the browser. */
+export class HttpSessionResolver implements SessionResolver {
+  constructor(
+    private readonly apiOrigin: URL,
+    private readonly fetcher: typeof fetch = fetch,
+  ) {
+    if (apiOrigin.protocol !== "https:" && apiOrigin.hostname !== "localhost") {
+      throw new TypeError("Authentication API origin must use HTTPS.");
+    }
+  }
+
+  async resolve(token: string): Promise<AuthenticatedSession | null> {
+    if (!/^[a-f0-9]{64,128}$/i.test(token)) return null;
+    let response: Response;
+    try {
+      response = await this.fetcher(new URL("/auth/session", this.apiOrigin), {
+        method: "GET",
+        headers: { authorization: "Bearer " + token, accept: "application/json" },
+        redirect: "error",
+        cache: "no-store",
+      });
+    } catch {
+      return null;
+    }
+    if (!response.ok) return null;
+    try {
+      const value = await response.json() as {
+        user?: { id?: unknown; email?: unknown };
+        session?: { id?: unknown; userId?: unknown; expiresAt?: unknown };
+      };
+      if (
+        typeof value.user?.id !== "string" ||
+        !(typeof value.user.email === "string" || value.user.email === null) ||
+        typeof value.session?.id !== "string" ||
+        typeof value.session.userId !== "string" ||
+        typeof value.session.expiresAt !== "string" ||
+        Date.parse(value.session.expiresAt) <= Date.now()
+      ) return null;
+      return {
+        user: { id: value.user.id, email: value.user.email },
+        session: { id: value.session.id, userId: value.session.userId, expiresAt: value.session.expiresAt },
+      };
+    } catch {
+      return null;
+    }
+  }
+}
