@@ -133,6 +133,7 @@ export class AuthService implements SessionResolver {
     if (!user) {
       const verifiedEmail = profile.emailVerified ? profile.email?.trim().toLowerCase() ?? null : null;
       user = await this.store.createUser({ email: verifiedEmail, phone: null });
+      if (verifiedEmail) user = (await this.store.verifyUserEmail(user.id, this.now().toISOString())) ?? user;
       await this.store.linkIdentity(user.id, providerName, profile.subject);
     }
     return this.issueSession(user);
@@ -141,9 +142,11 @@ export class AuthService implements SessionResolver {
   async requestMagicLink(destination: string): Promise<void> {
     const normalized = destination.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) return;
+    const user = await this.store.findOrCreateUserByEmail(normalized);
     const token = createOpaqueToken();
     await this.store.createChallenge({
       method: "email_magic_link",
+      userId: user.id,
       destinationHash: await digestText(normalized),
       secretHash: await hashOpaqueToken(token),
       expiresAt: new Date(this.now().getTime() + MAGIC_LINK_TTL_MS).toISOString(),
@@ -167,8 +170,7 @@ export class AuthService implements SessionResolver {
       Date.parse(challenge.expiresAt) <= this.now().getTime()
     ) throw new InvalidAuthenticationError();
 
-    // The store resolves the destination digest to a verified user atomically with challenge consumption.
-    const user = await this.store.findUserByVerifiedEmailDigest(challenge.destinationHash);
+    const user = await this.store.verifyUserEmail(challenge.userId, this.now().toISOString());
     if (!user) throw new InvalidAuthenticationError();
     return this.issueSession(user);
   }
