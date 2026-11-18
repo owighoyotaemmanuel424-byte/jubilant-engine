@@ -1,6 +1,7 @@
 import {
   CliSessionProvider,
   HttpSessionResolver,
+  type AuthFetch,
   type CliCredentialStore,
 } from "../../../packages/auth/src/index";
 
@@ -8,7 +9,7 @@ import {
 export function createCliSessionProvider(
   credentials: CliCredentialStore,
   apiOrigin: URL,
-  fetcher: typeof fetch = fetch,
+  fetcher?: AuthFetch,
 ): CliSessionProvider {
   return new CliSessionProvider(credentials, new HttpSessionResolver(apiOrigin, fetcher));
 }
