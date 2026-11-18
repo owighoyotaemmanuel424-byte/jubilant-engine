@@ -98,7 +98,7 @@ function fixture() {
   const idp = new TestIdP();
   const sent: URL[] = [];
   let now = new Date("2026-11-18T00:00:00.000Z");
-  const service = new AuthService(store, new Map([["google", {
+  const service = new AuthService(store, new Map<"google" | "github" | "apple", OAuthProviderConfig>([["google", {
     provider: idp, issuer: "https://idp.test", audience: "freebuff-test-client",
   }]]), {
     async sendEmailMagicLink(_destination, url) { sent.push(url); },
