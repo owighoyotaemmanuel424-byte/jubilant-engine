@@ -60,7 +60,7 @@ async function digestText(value: string): Promise<string> {
 function base64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  return btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
 async function pkceChallenge(verifier: string): Promise<string> {
@@ -141,7 +141,7 @@ export class AuthService implements SessionResolver {
 
   async requestMagicLink(destination: string): Promise<void> {
     const normalized = destination.trim().toLowerCase();
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalized)) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) return;
     const token = createOpaqueToken();
     await this.store.createChallenge({
       method: "email_magic_link",
