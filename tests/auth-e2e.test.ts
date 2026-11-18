@@ -102,7 +102,7 @@ function fixture() {
   let now = new Date("2026-11-18T00:00:00.000Z");
   const publicOrigin = new URL("https://app.example.test");
   const service = new AuthService(store, new Map<"google" | "github" | "apple", OAuthProviderConfig>([["google", {
-    provider: idp, issuer: "https://idp.test", audience: "freebuff-test-client",
+    provider: idp, issuer: "https://idp.test", audience: "freebuff-test-client", allowedRedirectUris: ["https://app.example.test/auth/oauth/google/callback"],
   }]]), {
     async sendEmailMagicLink(_destination, url) { sent.push(url); },
     async sendPhoneOtp() {},
@@ -114,7 +114,7 @@ function fixture() {
 describe("authentication end-to-end flows", () => {
   it("completes test-IdP redirect, callback, PKCE exchange, and session establishment", async () => {
     const { service, idp } = fixture();
-    const redirect = await service.startOAuth("google", "https://app.example.test/auth/callback");
+    const redirect = await service.startOAuth("google", "https://app.example.test/auth/oauth/google/callback");
     expect(redirect.origin).toBe("https://idp.test");
     expect(redirect.searchParams.get("code_challenge")).toBeTruthy();
     const state = redirect.searchParams.get("state")!;
@@ -153,7 +153,7 @@ describe("authentication end-to-end flows", () => {
 
   it("rejects a revoked session when that token is used again", async () => {
     const { service } = fixture();
-    const url = await service.startOAuth("google", "https://app.example.test/auth/callback");
+    const url = await service.startOAuth("google", "https://app.example.test/auth/oauth/google/callback");
     const token = await service.completeOAuth("google", url.searchParams.get("state")!, "valid-test-code");
     expect(await service.resolve(token)).not.toBeNull();
     await service.revoke(token);
@@ -161,8 +161,8 @@ describe("authentication end-to-end flows", () => {
   });
 
   it("makes the same server session abstraction consumable by the CLI", async () => {
-    const { service, idp } = fixture();
-    const url = await service.startOAuth("google", "https://app.example.test/auth/callback");
+    const { service } = fixture();
+    const url = await service.startOAuth("google", "https://app.example.test/auth/oauth/google/callback");
     const token = await service.completeOAuth("google", url.searchParams.get("state")!, "valid-test-code");
     let stored: string | null = null;
     const credentials = {
