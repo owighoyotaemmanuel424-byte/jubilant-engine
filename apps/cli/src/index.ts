@@ -12,3 +12,5 @@ export type {
 
 export { applyMultiFileEdit, createMultiFileEditTool, MultiFileEditConflictError } from "./multi-file-edit";
 export type { MultiFileEdit, MultiFileEditFileSystem, MultiFileEditOptions, MultiFileEditResult } from "./multi-file-edit";
+
+export * from "./session";
