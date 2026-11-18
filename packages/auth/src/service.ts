@@ -3,7 +3,6 @@ import {
   hashOpaqueToken,
   type AuthChallenge,
   type AuthIdentity,
-  type AuthProvider,
   type AuthRepository,
   type AuthSession,
   type AuthUser,
@@ -22,7 +21,6 @@ export interface AuthStore extends AuthRepository {
   createOAuthAttempt(attempt: OAuthAttempt): Promise<void>;
   consumeOAuthAttempt(state: string): Promise<OAuthAttempt | null>;
   createChallenge(challenge: Omit<AuthChallenge, "id" | "consumedAt" | "failedAttempts">): Promise<void>;
-  findUserByVerifiedEmail(email: string): Promise<AuthUser | null>;
   findUserById(userId: string): Promise<AuthUser | null>;
 }
 
